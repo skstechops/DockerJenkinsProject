@@ -37,7 +37,6 @@ pipeline {
         stage('Build Backend') {
             steps {
                 echo 'Building Backend Docker image...'
-
                 sh '''
                     docker build \
                     -t $DOCKER_BACKEND_IMAGE \
@@ -49,7 +48,6 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 echo 'Building Frontend Docker image...'
-
                 sh '''
                     docker build \
                     -t $DOCKER_FRONTEND_IMAGE \
@@ -58,10 +56,33 @@ pipeline {
             }
         }
 
+        stage('Trivy Scan Backend') {
+            steps {
+                echo 'Scanning Backend image for HIGH and CRITICAL vulnerabilities...'
+                sh '''
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    $DOCKER_BACKEND_IMAGE
+                '''
+            }
+        }
+
+        stage('Trivy Scan Frontend') {
+            steps {
+                echo 'Scanning Frontend image for HIGH and CRITICAL vulnerabilities...'
+                sh '''
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    $DOCKER_FRONTEND_IMAGE
+                '''
+            }
+        }
+
         stage('Push Backend') {
             steps {
                 echo 'Pushing Backend image to Docker Hub...'
-
                 sh '''
                     docker push $DOCKER_BACKEND_IMAGE
                 '''
@@ -71,7 +92,6 @@ pipeline {
         stage('Push Frontend') {
             steps {
                 echo 'Pushing Frontend image to Docker Hub...'
-
                 sh '''
                     docker push $DOCKER_FRONTEND_IMAGE
                 '''
@@ -89,7 +109,6 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Starting Backend and Frontend containers...'
-
                 sh '''
                     docker compose up -d
                 '''
@@ -134,4 +153,3 @@ pipeline {
         }
     }
 }
-
